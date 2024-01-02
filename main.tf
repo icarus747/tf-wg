@@ -59,7 +59,6 @@ resource "aws_instance" "vpnserver" {
 resource "aws_security_group" "security_group1" {
   ingress {
     cidr_blocks = ["${local.ifconfig_co_json.ip}/32"]
-    # cidr_blocks = ["67.141.161.98/32"]
     description = "SSH Ingress"
     from_port   = 22
     to_port     = 22
