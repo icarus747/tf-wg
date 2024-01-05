@@ -1,0 +1,88 @@
+---
+- hosts: all
+  become: true
+  vars:
+    container_count: 1
+    default_container_name: wireguard
+    default_container_image: lscr.io/linuxserver/wireguard
+    # default_container_command: sleep 1d
+
+  tasks:
+    - name: Wait for apt to unlock
+      become: yes
+      shell:  while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
+
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+        
+    - name: Install Docker-Compose plugin
+      apt:
+        name: docker-compose-plugin
+        state: latest
+        update_cache: true
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Pull default Docker image
+      community.docker.docker_image:
+        name: "{{ default_container_image }}"
+        source: pull
+
+    - name: Create default containers
+      community.docker.docker_container:
+        name: "{{ default_container_name }}"
+        image: "{{ default_container_image }}"
+        # command: "{{ default_container_command }}"
+        state: "started"
+        capabilities:
+          - "NET_ADMIN"
+          - "SYS_MODULE"
+        env:
+          PUID: "1000"
+          PGID: "1000"
+          TZ: "America/Chicago"
+          SERVERURL: "{{ SERVERURL }}"
+          SERVERPORT: "51821"
+        published_ports:
+          - "51821:51821/udp"
+        sysctls:
+          net.ipv4.conf.all.src_valid_mark: "1"
+        restart: true
+        volumes:
+          - /opt/config:/config
+            
+      # with_sequence: count={{ container_count }}

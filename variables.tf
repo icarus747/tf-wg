@@ -15,3 +15,8 @@ variable "my_instance_type" {
   description = "EC2 instance type"
   default     = "t2.micro"
 }
+
+variable "SERVERURL" {
+  type        = string
+  description = "Domain Name for WireGuard"
+}

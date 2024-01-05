@@ -2,3 +2,5 @@ post server setup:
  terraform output -raw private_key > mykey.pem
  chmod 600 mykey.pem
  ssh -i mykey.pem ubuntu@$(terraform output -raw public_ip)
+
+ansible-playbook -u root -i '$(terraform output -raw public_ip),' --private-key mykey.pem docker_install.yml

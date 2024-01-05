@@ -54,6 +54,10 @@ resource "aws_instance" "vpnserver" {
   vpc_security_group_ids      = [aws_security_group.security_group1.id]
   # user_data                   = file("post_install.sh")
   # user_data_replace_on_change = true
+
+  provisioner "local-exec" {
+    command = "terraform output -raw private_key > mykey.pem && chmod 600 mykey.pem"
+  }
 }
 
 resource "aws_security_group" "security_group1" {
@@ -70,7 +74,7 @@ resource "aws_security_group" "security_group1" {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"
-  }  
+  }
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
     description = "WG Ingress"
@@ -84,6 +88,17 @@ resource "aws_security_group" "security_group1" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "null_resource" "docker_install" {
+  # Force rerun of install `terraform apply -target=null_resource.docker_build`
+    triggers = {
+      always_run = "${timestamp()}"
+    }
+
+    provisioner "local-exec" {
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem -e SERVERURL=${var.SERVERURL} docker_install.yml"
   }
 }
 
