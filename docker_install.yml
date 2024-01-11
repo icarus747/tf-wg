@@ -5,6 +5,7 @@
     container_count: 1
     default_container_name: wireguard
     default_container_image: lscr.io/linuxserver/wireguard
+    default_file_ower: ubuntu
     # default_container_command: sleep 1d
 
   tasks:
@@ -57,17 +58,16 @@
       pip:
         name: docker
 
-    - name: Pull default Docker image
+    - name: Pull wireguard image
       community.docker.docker_image:
-        name: "{{ default_container_image }}"
+        name: lscr.io/linuxserver/wireguard
         source: pull
 
-    - name: Create default containers
+    - name: Create wireguard
       community.docker.docker_container:
-        name: "{{ default_container_name }}"
-        image: "{{ default_container_image }}"
-        # command: "{{ default_container_command }}"
-        state: "started"
+        name: wireguard
+        image: lscr.io/linuxserver/wireguard
+        # state: "absent"
         capabilities:
           - "NET_ADMIN"
           - "SYS_MODULE"
@@ -76,13 +76,24 @@
           PGID: "1000"
           TZ: "America/Chicago"
           SERVERURL: "{{ SERVERURL }}"
-          SERVERPORT: "51821"
+          SERVERPORT: "51820"
         published_ports:
-          - "51821:51821/udp"
+          - "51821:51820/udp"
         sysctls:
           net.ipv4.conf.all.src_valid_mark: "1"
         restart: true
         volumes:
           - /opt/config:/config
-            
-      # with_sequence: count={{ container_count }}
+
+    - name: Copy wg0.conf file
+      ansible.builtin.copy:
+        src: ./wg0.conf
+        dest: /opt/config/wg_confs/wg0.conf
+        owner: "{{ default_file_ower }}"
+        group: "{{ default_file_ower }}"
+        mode: '0600'
+
+    - name: Restart wireguard
+      community.docker.docker_container:
+        name: wireguard
+        restart: true

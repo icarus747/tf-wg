@@ -29,3 +29,6 @@ override.tf.json
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
 *.pem
+
+# Include wireguard config file which contains keys
+**/wg0.conf
