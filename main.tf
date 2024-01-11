@@ -100,6 +100,9 @@ resource "null_resource" "docker_install" {
     provisioner "local-exec" {
     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem -e SERVERURL=${var.SERVERURL} docker_install.yml"
   }
+      provisioner "local-exec" {
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem -e SERVERURL=${var.SERVERURL} wireguard_install.yml"
+  }
 }
 
 module "tls" {

@@ -1,0 +1,45 @@
+---
+- hosts: all
+  # become: true
+
+  tasks:
+    - name: Delete wireguard
+      community.docker.docker_container:
+        name: wireguard
+        image: lscr.io/linuxserver/wireguard
+        state: "absent"
+
+    - name: Delete wireguard GUI
+      community.docker.docker_container:
+        name: wireguard_gui
+        image: ngoduykhanh/wireguard-ui
+        state: "absent"
+     
+    - name: Delete pihole DNS
+      community.docker.docker_container:
+        name: wireguard_pihole
+        image: pihole/pihole
+        state: "absent"
+
+    - name: Delete wireguard image
+      community.docker.docker_image:
+        name: lscr.io/linuxserver/wireguard
+        state: absent
+
+    - name: Delete wireguard GUI image
+      community.docker.docker_image:
+        name: ngoduykhanh/wireguard-ui
+        state: absent
+        
+    - name: Delete pihole image
+      community.docker.docker_image:
+        name: pihole/pihole
+        state: absent              
+
+    - name: Delete pihole network
+      community.docker.docker_network:
+        name: pihole
+        state: absent
+
+
+

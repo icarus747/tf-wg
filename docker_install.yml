@@ -1,12 +1,7 @@
 ---
 - hosts: all
   become: true
-  vars:
-    container_count: 1
-    default_container_name: wireguard
-    default_container_image: lscr.io/linuxserver/wireguard
-    default_file_ower: ubuntu
-    # default_container_command: sleep 1d
+
 
   tasks:
     - name: Wait for apt to unlock
@@ -34,12 +29,12 @@
 
     - name: Add Docker GPG apt Key
       apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
+        url: https://download.docker.com/linux/b14586/gpg
         state: present
 
     - name: Add Docker Repository
       apt_repository:
-        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        repo: deb https://download.docker.com/linux/b14586 focal stable
         state: present
 
     - name: Update apt and install docker-ce
@@ -58,42 +53,3 @@
       pip:
         name: docker
 
-    - name: Pull wireguard image
-      community.docker.docker_image:
-        name: lscr.io/linuxserver/wireguard
-        source: pull
-
-    - name: Create wireguard
-      community.docker.docker_container:
-        name: wireguard
-        image: lscr.io/linuxserver/wireguard
-        # state: "absent"
-        capabilities:
-          - "NET_ADMIN"
-          - "SYS_MODULE"
-        env:
-          PUID: "1000"
-          PGID: "1000"
-          TZ: "America/Chicago"
-          SERVERURL: "{{ SERVERURL }}"
-          SERVERPORT: "51820"
-        published_ports:
-          - "51821:51820/udp"
-        sysctls:
-          net.ipv4.conf.all.src_valid_mark: "1"
-        restart: true
-        volumes:
-          - /opt/config:/config
-
-    - name: Copy wg0.conf file
-      ansible.builtin.copy:
-        src: ./wg0.conf
-        dest: /opt/config/wg_confs/wg0.conf
-        owner: "{{ default_file_ower }}"
-        group: "{{ default_file_ower }}"
-        mode: '0600'
-
-    - name: Restart wireguard
-      community.docker.docker_container:
-        name: wireguard
-        restart: true
