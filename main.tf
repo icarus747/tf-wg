@@ -24,6 +24,7 @@ locals {
 
 provider "aws" {
   region = var.region
+
 }
 
 data "aws_ami" "ubuntu" {
@@ -48,10 +49,10 @@ resource "aws_key_pair" "mykey" {
 }
 
 resource "aws_instance" "vpnserver" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.my_instance_type
-  key_name                    = aws_key_pair.mykey.key_name
-  vpc_security_group_ids      = [aws_security_group.security_group1.id]
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.my_instance_type
+  key_name               = aws_key_pair.mykey.key_name
+  vpc_security_group_ids = [aws_security_group.security_group1.id]
   # user_data                   = file("post_install.sh")
   # user_data_replace_on_change = true
 
@@ -93,12 +94,16 @@ resource "aws_security_group" "security_group1" {
 
 resource "null_resource" "docker_install" {
   # Force rerun of install `terraform apply -target=null_resource.docker_build`
-    triggers = {
-      always_run = "${timestamp()}"
-    }
+  # https://ilhicas.com/2019/08/17/Terraform-local-exec-run-always.html?expand_article=1
+  triggers = {
+    always_run = "${timestamp()}"
+  }
 
-    provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem -e SERVERURL=${var.SERVERURL} docker_install.yml"
+  provisioner "local-exec" {
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem docker_install.yml"
+  }
+  provisioner "local-exec" {
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem wireguard_install.yml"
   }
 }
 

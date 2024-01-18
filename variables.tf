@@ -16,7 +16,7 @@ variable "my_instance_type" {
   default     = "t2.micro"
 }
 
-variable "SERVERURL" {
-  type        = string
-  description = "Domain Name for WireGuard"
-}
+# variable "SERVERURL" {
+#   type        = string
+#   description = "Domain Name for WireGuard"
+# }

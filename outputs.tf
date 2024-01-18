@@ -11,3 +11,7 @@ output "private_key" {
 output "my_ip_addr" {
   value = local.ifconfig_co_json.ip
 }
+
+output "Next_Steps" {
+  value = "Connect to your EC2 on port 5000 and setup a WG clinet. Apply settings and reboot the WG container (by running TF apply again, or manually restarting the container)."
+}

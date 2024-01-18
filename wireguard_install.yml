@@ -1,0 +1,96 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Pull wireguard image
+      community.docker.docker_image:
+        name: lscr.io/linuxserver/wireguard
+        source: pull
+
+    - name: Pull wireguard GUI image
+      community.docker.docker_image:
+        name: ngoduykhanh/wireguard-ui
+        source: pull
+        
+    - name: Pull pihole image
+      community.docker.docker_image:
+        name: pihole/pihole
+        source: pull                
+
+    - name: Create pihole network
+      community.docker.docker_network:
+        name: pihole
+        ipam_config:
+          - subnet: 10.13.12.0/24
+
+    - name: Create wireguard
+      community.docker.docker_container:
+        name: wireguard
+        image: lscr.io/linuxserver/wireguard
+        capabilities:
+          - "NET_ADMIN"
+          - "SYS_MODULE"
+        env:
+          PUID: "1000"
+          PGID: "1000"
+          TZ: "America/Chicago"
+        published_ports:
+          - "51821:51821/udp"
+        sysctls:
+          net.ipv4.conf.all.src_valid_mark: "1"
+        volumes:
+          - /opt/config:/config
+        networks:
+          - name: pihole
+            ipv4_address: "10.13.12.252" 
+
+    - name: Create wireguard GUI
+      community.docker.docker_container:
+        name: wireguard_gui
+        image: ngoduykhanh/wireguard-ui
+        capabilities:
+          - "NET_ADMIN"
+        env:
+          WGUI_USERNAME: alpha
+          WGUI_PASSWORD: alpha
+          WGUI_ENDPOINT_ADDRESS: "{{ SERVERURL }}"
+          WGUI_DNS: "10.13.12.254"
+          WGUI_SERVER_INTERFACE_ADDRESSES: "10.13.13.0/24"
+          WGUI_SERVER_LISTEN_PORT: "51821"
+          WGUI_SERVER_POST_UP_SCRIPT: "iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
+          WGUI_SERVER_POST_DOWN_SCRIPT: "iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE"
+          WGUI_MANAGE_RESTART: "true"
+        published_ports:
+          - "5000:5000/tcp"
+        volumes:
+          - /opt/config:/app/db
+          - /opt/config/wg_confs:/etc/wireguard
+        networks:
+          - name: pihole
+            ipv4_address: "10.13.12.253"        
+
+    - name: Create pihole DNS
+      community.docker.docker_container:
+        name: wireguard_pihole
+        image: pihole/pihole
+        env:
+          WEBPASSWORD: alpha
+          DNS1: "1.1.1.1"
+          DNS2: "1.0.0.1"
+        volumes:
+          - /opt/config/pihole:/etc/pihole
+          - /opt/config/pihole-dnsmasq:/etc/dnsmasq.d
+        networks:
+          - name: pihole
+            ipv4_address: "10.13.12.254" 
+
+    - name: Restart wireguard GUI 
+      community.docker.docker_container:
+        name: wireguard_gui
+        restart: true
+
+    - name: Restart wireguard 
+      community.docker.docker_container:
+        name: wireguard
+        restart: true
