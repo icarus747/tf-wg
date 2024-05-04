@@ -54,7 +54,7 @@
         env:
           WGUI_USERNAME: alpha
           WGUI_PASSWORD: alpha
-          WGUI_ENDPOINT_ADDRESS: "{{ SERVERURL }}"
+          # WGUI_ENDPOINT_ADDRESS: "{{ SERVERURL }}"
           WGUI_DNS: "10.13.12.254"
           WGUI_SERVER_INTERFACE_ADDRESSES: "10.13.13.0/24"
           WGUI_SERVER_LISTEN_PORT: "51821"

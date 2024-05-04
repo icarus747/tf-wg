@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "4.19.0"
+      version = "~> 5.0"
     }
     tls = {
       source  = "hashicorp/tls"
@@ -32,7 +32,8 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+    # values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]    
   }
 
   filter {
@@ -59,6 +60,12 @@ resource "aws_instance" "vpnserver" {
   provisioner "local-exec" {
     command = "terraform output -raw private_key > mykey.pem && chmod 600 mykey.pem"
   }
+}
+
+resource "aws_ec2_instance_state" "vpnserver" {
+  instance_id = aws_instance.vpnserver.id
+  # state       = "stopped"
+  state       = "running"
 }
 
 resource "aws_security_group" "security_group1" {
@@ -97,6 +104,15 @@ resource "null_resource" "docker_install" {
   # https://ilhicas.com/2019/08/17/Terraform-local-exec-run-always.html?expand_article=1
   triggers = {
     always_run = "${timestamp()}"
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      host = aws_instance.vpnserver.public_dns
+      user = "ubuntu"
+      private_key = file("./mykey.pem")
+    }
+    inline = ["echo 'connected!'"]
   }
 
   provisioner "local-exec" {
