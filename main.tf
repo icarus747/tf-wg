@@ -99,10 +99,10 @@ resource "aws_security_group" "security_group1" {
   }
 }
 
-resource "null_resource" "docker_install" {
+resource "terraform_data" "docker_install" {
   # Force rerun of install `terraform apply -target=null_resource.docker_build`
   # https://ilhicas.com/2019/08/17/Terraform-local-exec-run-always.html?expand_article=1
-  triggers = {
+  triggers_replace  = {
     always_run = "${timestamp()}"
   }
 
