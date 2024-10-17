@@ -36,3 +36,4 @@ override.tf.json
 # Variable placement files
 **/.env
 **/.aws
+secrets.tf

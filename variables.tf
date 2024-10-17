@@ -16,6 +16,18 @@ variable "my_instance_type" {
   default     = "t2.micro"
 }
 
+# variable "cloudflare_api_token" {
+#   type        = string
+#   description = "Cloudflare api token for domains."
+#   default     = "some_value"
+# }
+
+# variable "cloudflare_zone_id" {
+#   type        = string
+#   description = "Cloudflare domain zone id."
+#   default     = "some_value"
+# }
+
 # variable "SERVERURL" {
 #   type        = string
 #   description = "Domain Name for WireGuard"

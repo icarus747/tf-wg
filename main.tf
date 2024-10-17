@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/tls"
       version = "4.0.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -20,6 +24,10 @@ data "http" "myip" {
 
 locals {
   ifconfig_co_json = jsondecode(data.http.myip.response_body)
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
 provider "aws" {
@@ -66,6 +74,14 @@ resource "aws_ec2_instance_state" "vpnserver" {
   instance_id = aws_instance.vpnserver.id
   # state       = "stopped"
   state       = "running"
+}
+
+resource "cloudflare_record" "example" {
+  zone_id     = var.cloudflare_zone_id
+  name        = "aws"
+  content       = aws_instance.vpnserver.public_dns
+  type        = "CNAME"
+  ttl         = 300
 }
 
 resource "aws_security_group" "security_group1" {
