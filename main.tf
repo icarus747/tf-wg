@@ -72,8 +72,8 @@ resource "aws_instance" "vpnserver" {
 
 resource "aws_ec2_instance_state" "vpnserver" {
   instance_id = aws_instance.vpnserver.id
-  # state       = "stopped"
-  state       = "running"
+  state       = "stopped"
+  # state       = "running"
 }
 
 resource "cloudflare_record" "example" {
@@ -92,50 +92,19 @@ resource "aws_security_group" "security_group1" {
     to_port     = 22
     protocol    = "tcp"
   }
-  ingress {
-    cidr_blocks = ["${local.ifconfig_co_json.ip}/32"]
-    description = "WGUI Ingress"
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-  }
+
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
-    description = "WG Ingress"
-    from_port   = 51821
-    to_port     = 51821
-    protocol    = "udp"
+    description = "NGINX"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
   }
-
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "terraform_data" "docker_install" {
-  # Force rerun of install `terraform apply -target=null_resource.docker_build`
-  # https://ilhicas.com/2019/08/17/Terraform-local-exec-run-always.html?expand_article=1
-  triggers_replace  = {
-    always_run = "${timestamp()}"
-  }
-
-  provisioner "remote-exec" {
-    connection {
-      host = aws_instance.vpnserver.public_dns
-      user = "ubuntu"
-      private_key = file("./mykey.pem")
-    }
-    inline = ["echo 'connected!'"]
-  }
-
-  provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem docker_install.yml"
-  }
-  provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${aws_instance.vpnserver.public_ip},' --private-key mykey.pem wireguard_install.yml"
   }
 }
 
